@@ -20,18 +20,28 @@ class Player(pygame.sprite.Sprite):
         # Set initial position
         self.rect = self.image.get_rect()
         self.rect.center = (screen_width // 2, screen_height // 2)
-        self.speed = 5
+        self.speed = 2
 
     def update(self, keys):
+        directions = {
+            "left": False,
+            "right": False,
+            "up": False,
+            "down": False
+        }
         # Movement logic
-        if keys[pygame.K_LEFT] and self.rect.left > 0:
+        if keys[pygame.K_LEFT] and self.rect.left > 0 and list(directions.values()).count(False) == 3:
             self.rect.x -= self.speed
-        if keys[pygame.K_RIGHT] and self.rect.right < screen_width:
+            directions["left"] = True
+        if keys[pygame.K_RIGHT] and self.rect.right < screen_width and list(directions.values()).count(False) == 3:
             self.rect.x += self.speed
-        if keys[pygame.K_UP] and self.rect.top > 0:
+            directions["right"] = True
+        if keys[pygame.K_UP] and self.rect.top > 0 and list(directions.values()).count(False) == 3:
             self.rect.y -= self.speed
-        if keys[pygame.K_DOWN] and self.rect.bottom < screen_height:
+            directions["up"] = True
+        if keys[pygame.K_DOWN] and self.rect.bottom < screen_height and list(directions.values()).count(False) == 3:
             self.rect.y += self.speed
+            directions["down"] = True
 
 # 4. Setup Game Objects
 player = Player()
