@@ -97,6 +97,17 @@ while running:
 
     player.update()
 
+    if player.rect.x < 0:
+        print("kill")
+
+    if player.rect.x >= screen_width:
+        print("kill")
+
+    if player.rect.y < 0:
+        print("kill")
+
+    if player.rect.y >= screen_height:
+        print("kill")  
     # Get Keys & Update Logic
     keys = pygame.key.get_pressed()
 
