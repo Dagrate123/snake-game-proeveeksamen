@@ -1,66 +1,160 @@
 import pygame
 import random
+import requests
 
-# 1. Initialize Pygame
+def register(username, password):
+    response = requests.post(
+        "http://127.0.0.1:8000/register",
+        json={"username": username, "password": password}
+    )
+    print(response.json())
+
+def login(username, password):
+    response = requests.post(
+        "http://127.0.0.1:8000/login",
+        json={"username": username, "password": password}
+    )
+    print(response.json())
+    return response.status_code == 200
+
+def save_score(username, score):
+    response = requests.post(
+        "http://127.0.0.1:8000/save_score",
+        json={"username": username, "score": score}
+    )
+    print(response.json())
+
 pygame.init()
 
-# 2. Create the window
 screen_width = 800
 screen_height = 600
+
 screen = pygame.display.set_mode((screen_width, screen_height))
+
 pygame.display.set_caption("Snake-Game")
 
-# 3. Define the Player Class
 class Player(pygame.sprite.Sprite):
+
     def __init__(self):
         super().__init__()
+
         self.image = pygame.Surface((20, 20))
-        self.image.fill((0, 255, 0)) 
-        
-        # Set initial position
+        self.image.fill((0, 255, 0))
+
         self.rect = self.image.get_rect()
-        self.rect.center = (screen_width // 2, screen_height // 2)
-        self.speed = 5
+
+        self.rect.center = (
+            screen_width // 2,
+            screen_height // 2
+        )
+
+        self.speed = 20
         self.dx = self.speed
         self.dy = 0
 
     def update(self):
-
         self.rect.x += self.dx
         self.rect.y += self.dy
 
 class Apple(pygame.sprite.Sprite):
+
     def __init__(self):
         super().__init__()
 
         self.image = pygame.Surface((20, 20))
         self.image.fill((255, 0, 0))
-
         self.rect = self.image.get_rect()
-
         self.randomize_position()
 
     def randomize_position(self):
-        self.rect.x = random.randint(0, screen_width - 20)
-        self.rect.y = random.randint(0, screen_height - 20)
-    
-# 4. Setup Game Objects
+        self.rect.x = random.randint(0, screen_width - 40)
+        self.rect.y = random.randint(0, screen_height - 40)
+
+spike_size = 20
+
+def draw_spikes():
+
+    for x in range(0, screen_width, spike_size):
+        pygame.draw.polygon(screen, (255, 0, 0), [(x, 0), (x + 10, 20), (x + 20, 0)])
+        pygame.draw.polygon(screen, (255, 0, 0), [(x, screen_height), (x + 10, screen_height - 20), (x + 20, screen_height)])
+    for y in range(0, screen_height, spike_size):
+        pygame.draw.polygon(screen, (255, 0, 0), [(0, y), (20, y + 10), (0, y + 20)])
+        pygame.draw.polygon(screen, (255, 0, 0), [(screen_width, y), (screen_width - 20, y + 10), (screen_width, y + 20)])
+
 player = Player()
 apple = Apple()
-all_sprites = pygame.sprite.Group()
-all_sprites.add(player, apple)
+all_sprites = pygame.sprite.Group(player, apple)
+snake_body = []
+score = 0
 
+font = pygame.font.SysFont(None, 40)
 
-# 5. Main Game Loop
-running = True
+username = ""
+password = ""
+active_input = "username"
+
+def switch_input():
+    global active_input
+    active_input = "password" if active_input == "username" else "username"
+
+login_screen = True
+logged_in = False
+mode = "login"   
 clock = pygame.time.Clock()
 
-snake_body = []
+while login_screen:
+    screen.fill((255, 255, 255))
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            quit()
 
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_TAB:
+                mode = "register" if mode == "login" else "login"
+            if event.key == pygame.K_q:
+                switch_input()
+            elif event.key == pygame.K_BACKSPACE:
+                if active_input == "username":
+                    username = username[:-1]
+                else:
+                    password = password[:-1]
+            elif event.key == pygame.K_F1:
+                register(username, password)
+            elif event.key == pygame.K_t:
+                if mode == "login":
+                    logged_in = login(username, password)
+                    if logged_in:
+                        login_screen = False
+                else:
+                    register(username, password)
+            else:
+                if active_input == "username":
+                    username += event.unicode
+                else:
+                    password += event.unicode
+
+    screen.blit(font.render("LOGIN SCREEN", True, (0, 0, 0)), (300, 100))
+    screen.blit(
+        font.render(f"MODE: {mode.upper()} (TAB)", True, (0, 0, 0)),
+        (250, 150)
+    )
+    screen.blit(font.render("Username:", True, (0, 0, 0)), (150, 220))
+    screen.blit(font.render(username, True, (0, 0, 0)), (350, 220))
+    screen.blit(font.render("Password:", True, (0, 0, 0)), (150, 320))
+    screen.blit(font.render("*" * len(password), True, (0, 0, 0)), (350, 320))
+    pygame.display.flip()
+    clock.tick(60)
+
+if not logged_in:
+    quit()
+
+running = True
 
 while running:
-    # Handle Events
+
     for event in pygame.event.get():
+
         if event.type == pygame.QUIT:
             running = False
 
@@ -84,42 +178,48 @@ while running:
 
     if player.rect.colliderect(apple.rect):
         apple.randomize_position()
-
         snake_body.append(player.rect.copy())
+        score += 1
 
     for i in range(len(snake_body) - 1, 0, -1):
+
         snake_body[i].x = snake_body[i - 1].x
         snake_body[i].y = snake_body[i - 1].y
 
     if len(snake_body) > 0:
+
         snake_body[0].x = player.rect.x
         snake_body[0].y = player.rect.y
 
+
     player.update()
 
-    if player.rect.x < 0:
-        print("kill")
+    if (
+        player.rect.x < 0 or
+        player.rect.x >= screen_width or
+        player.rect.y < 0 or
+        player.rect.y >= screen_height
+    ):
 
-    if player.rect.x >= screen_width:
-        print("kill")
+        save_score(username, score)
+        running = False
 
-    if player.rect.y < 0:
-        print("kill")
+    screen.fill((255, 255, 255))
 
-    if player.rect.y >= screen_height:
-        print("kill")  
-    # Get Keys & Update Logic
-    keys = pygame.key.get_pressed()
-
-    # Drawing
-    screen.fill((255, 255, 255))  # White background
-    all_sprites.draw(screen)      # Draw all sprites in the group
+    all_sprites.draw(screen)
 
     for segment in snake_body:
         pygame.draw.rect(screen, (0, 200, 0), segment)
 
-    pygame.display.flip()         # Update display
-    clock.tick(60)                # Limit to 60 FPS
+    draw_spikes()
 
+    screen.blit(
+        font.render(f"Score: {score}", True, (0, 0, 0)),
+        (10, 10)
+    )
+
+    pygame.display.flip()
+
+    clock.tick(10)
 
 pygame.quit()
