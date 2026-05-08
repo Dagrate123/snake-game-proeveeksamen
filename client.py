@@ -121,7 +121,7 @@ while login_screen:
                     password = password[:-1]
             elif event.key == pygame.K_F1:
                 register(username, password)
-            elif event.key == pygame.K_t:
+            elif event.key == pygame.K_F2:
                 if mode == "login":
                     logged_in = login(username, password)
                     if logged_in:
