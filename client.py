@@ -2,6 +2,7 @@ import pygame
 import random
 import requests
 import time
+import socket 
 
 def register(username, password):
     response = requests.post(
@@ -24,6 +25,17 @@ def save_score(username, score):
         json={"username": username, "score": score}
     )
     print(response.json())
+
+host = "127.0.0.1"
+port = 8000
+
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.connect((host, port))
+    s.sendall(b"hello world!")
+    data = s.recv(1024)
+
+    print(f"recieved {data!r}")
 
 pygame.init()
 
@@ -67,9 +79,14 @@ class Apple(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.randomize_position()
 
-    def randomize_position(self):
-        self.rect.x = random.randint(0, screen_width - 40)
-        self.rect.y = random.randint(0, screen_height - 40)
+    def randomize_position(self):   
+
+        self.rect.x = random.randint(0, screen_width - 20)
+        self.rect.y = random.randint(0, screen_height - 20)
+
+        data = f"{self.rect.x},{self.rect.y}"
+    
+        self.sock.send(data.encode()) 
 
 spike_size = 20
 
@@ -149,11 +166,10 @@ while login_screen:
     screen.blit(font.render(username, True, (0, 0, 0)), (350, 220))
     screen.blit(font.render("Password:", True, (0, 0, 0)), (150, 320))
     screen.blit(font.render("*" * len(password), True, (0, 0, 0)), (350, 320))
-    startbutton = screen.blit(font.render("START GAME", True, (0, 0, 0)), (300, 350))
+    screen.blit(font.render("PRESS F2 TO START", True, (0, 0, 0)), (250, 370))
+    screen.blit(font.render("PRESS F1 TO SUBMIT REGISTER", True, (0, 0, 0)), (250, 420))
     pygame.display.flip()
     clock.tick(60)
-
-    mouse_pos = pygame.mouse.get_pos()
 
 if not logged_in:
     quit()
@@ -200,7 +216,6 @@ while running:
         snake_body[0].x = player.rect.x
         snake_body[0].y = player.rect.y
 
-
     player.update()
 
     if (
@@ -219,6 +234,9 @@ while running:
 
     for segment in snake_body:
         pygame.draw.rect(screen, (0, 200, 0), segment)
+        if player.rect.colliderect(segment):
+            save_score(username, score)
+            running = False
 
     draw_spikes()
 
@@ -230,5 +248,27 @@ while running:
     pygame.display.flip()
 
     clock.tick(10)
+
+if running == False:
+    death_screen = True
+
+while death_screen:
+
+    for event in pygame.event.get():
+
+        if event.type == pygame.QUIT:
+            running = False
+
+        if event.type == pygame.KEYDOWN:
+
+            if event.key == pygame.K_F2:
+                login_screen = True
+                death_screen = False
+
+
+    screen.blit(font.render("YOU DIED", True, (255, 0, 0)), (300, 100))
+    screen.blit(font.render("PRESS F2 TO START AGAIN", True, (0, 0, 0)), (250, 370))
+    pygame.display.flip()
+    clock.tick(60)
 
 pygame.quit()
