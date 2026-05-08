@@ -1,17 +1,18 @@
 import pygame
 import random
 import requests
+import time
 
 def register(username, password):
     response = requests.post(
-        "http://192.168.20.74:8000/register",
+        "http://127.0.0.1:8000/register",
         json={"username": username, "password": password}
     )
     print(response.json())
 
 def login(username, password):
     response = requests.post(
-        "http://192.168.20.74:8000/login",
+        "http://127.0.0.1:8000/login",
         json={"username": username, "password": password}
     )
     print(response.json())
@@ -19,7 +20,7 @@ def login(username, password):
 
 def save_score(username, score):
     response = requests.post(
-        "http://192.168.20.74:8000/save_score",
+        "http://127.0.0.1:8000/save_score",
         json={"username": username, "score": score}
     )
     print(response.json())
@@ -133,6 +134,11 @@ while login_screen:
                     username += event.unicode
                 else:
                     password += event.unicode
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if self.rect.collidepoint(startbutton.pos):
+                    running = True
+                else:
+                    running = False
 
     screen.blit(font.render("LOGIN SCREEN", True, (0, 0, 0)), (300, 100))
     screen.blit(
@@ -143,8 +149,11 @@ while login_screen:
     screen.blit(font.render(username, True, (0, 0, 0)), (350, 220))
     screen.blit(font.render("Password:", True, (0, 0, 0)), (150, 320))
     screen.blit(font.render("*" * len(password), True, (0, 0, 0)), (350, 320))
+    startbutton = screen.blit(font.render("START GAME", True, (0, 0, 0)), (300, 350))
     pygame.display.flip()
     clock.tick(60)
+
+    mouse_pos = pygame.mouse.get_pos()
 
 if not logged_in:
     quit()
