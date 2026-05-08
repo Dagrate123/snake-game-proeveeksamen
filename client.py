@@ -4,14 +4,14 @@ import requests
 
 def register(username, password):
     response = requests.post(
-        "http://127.0.0.1:8000/register",
+        "http://192.168.20.74:8000/register",
         json={"username": username, "password": password}
     )
     print(response.json())
 
 def login(username, password):
     response = requests.post(
-        "http://127.0.0.1:8000/login",
+        "http://192.168.20.74:8000/login",
         json={"username": username, "password": password}
     )
     print(response.json())
@@ -19,7 +19,7 @@ def login(username, password):
 
 def save_score(username, score):
     response = requests.post(
-        "http://127.0.0.1:8000/save_score",
+        "http://192.168.20.74:8000/save_score",
         json={"username": username, "score": score}
     )
     print(response.json())
